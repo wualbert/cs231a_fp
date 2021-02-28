@@ -1,3 +1,5 @@
+# Adapted from Clay Flanningan(https://github.com/ClayFlannigan/icp)
+
 import numpy as np
 import time
 import icp
