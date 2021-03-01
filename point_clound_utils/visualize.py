@@ -55,6 +55,6 @@ def visualize_point_cloud(meshcat_vis, clouds:np.ndarray):
             raise NotImplementedError
 
         # Create red and blue meshcat point clouds for visualization.
-        cloud_meshcat = g.PointCloud(cloud[:,:3].T/1e3, color_arr, size=0.01)
+        cloud_meshcat = g.PointCloud(cloud[:,:3].T, color_arr, size=0.01)
 
         meshcat_vis[str(i)].set_object(cloud_meshcat)
