@@ -1,8 +1,8 @@
 # Adapted from Clay Flanningan(https://github.com/ClayFlannigan/icp)
 
 import numpy as np
+import math_utils
 from sklearn.neighbors import NearestNeighbors
-
 
 def best_fit_transform(A, B):
     '''
@@ -116,6 +116,27 @@ def icp(A, B, init_pose=None, max_iterations=20, tolerance=0.001):
         prev_error = mean_error
 
     # calculate final transformation
-    T,_,_ = best_fit_transform(A, src[:m,:].T)
+    H,_,_ = best_fit_transform(A, src[:m,:].T)
 
-    return T, distances, i
+    return H, distances, i
+
+
+def repeat_icp_until_convergence(A, B, init_pose=None,
+                                 max_iterations=20, tolerance=0.001,
+                                 max_repeats = 10, distance_threshold = 1e-4):
+    best_distance = np.inf
+    best_d = np.full(A.shape[0], np.inf)
+    best_H = init_pose
+    inital_H = np.eye(4)
+    for repeat in range(max_repeats):
+        new_H, d, _ = icp(A, B, inital_H, max_iterations, tolerance)
+        new_distance = np.average(d)
+        # Guess using the previous estimation and random rotation
+        if best_distance > new_distance:
+            best_H = new_H
+            best_distance = new_distance
+            best_d = d
+        if best_distance < distance_threshold:
+            break
+        inital_H = math_utils.generate_random_H(translation_lim=0) @ best_H
+    return best_H, best_d, repeat
