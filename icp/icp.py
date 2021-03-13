@@ -2,6 +2,7 @@
 
 import numpy as np
 import math_utils
+import point_clound_utils.transform as transform
 from sklearn.neighbors import NearestNeighbors
 
 def best_fit_transform(A, B):
@@ -67,7 +68,7 @@ def nearest_neighbor(src, dst):
     return distances.ravel(), indices.ravel()
 
 
-def icp(A, B, init_pose=None, max_iterations=20, tolerance=0.001):
+def icp(A, B, init_pose=None, max_iterations=50, tolerance=0.0001):
     '''
     The Iterative Closest Point method: finds best-fit transform that maps points A on to points B
     Input:
@@ -118,7 +119,10 @@ def icp(A, B, init_pose=None, max_iterations=20, tolerance=0.001):
     # calculate final transformation
     H,_,_ = best_fit_transform(A, src[:m,:].T)
 
-    return H, distances, i
+    estimated_point_cloud = transform.transform_cloud(A, H)
+    dist, _ = nearest_neighbor(B, estimated_point_cloud)
+
+    return H, dist, i
 
 
 def repeat_icp_until_convergence(A, B, init_pose=None,
@@ -138,5 +142,5 @@ def repeat_icp_until_convergence(A, B, init_pose=None,
             best_d = d
         if best_distance < distance_threshold:
             break
-        inital_H = math_utils.generate_random_H(translation_lim=0) @ best_H
+        inital_H = math_utils.generate_random_H(translation_lim=0.1) @ best_H
     return best_H, best_d, repeat

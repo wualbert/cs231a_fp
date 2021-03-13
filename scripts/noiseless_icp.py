@@ -20,9 +20,11 @@ for model_index, model in enumerate(param.selected_models):
     for h_i in range(num_transforms):
         H = math_utils.generate_random_H(random_state=random_state)
         transformed_cloud = transform.transform_cloud(point_cloud, H)
-        H_hat, d, i = icp.repeat_icp_until_convergence(point_cloud, transformed_cloud)
+        H_hat, d, i = icp.icp(point_cloud, transformed_cloud)
+        # H_hat, d, i = icp.repeat_icp_until_convergence(point_cloud, transformed_cloud)
         davg = np.average(d)
-        # print(f'H_hat:{H_hat}, distance:{davg}, i:{i}')
+        # print(f'H_hat:{H_hat}, distance:{add}, i:{i}')
         dists[model_index, h_i] = davg
     print('done model ', model_index)
-print('avg', np.average(dists, axis=1), 'std', np.std(dists, axis=1))
+print('standard icp')
+print('avg', np.average(dists, axis=1)*1e2, 'std', np.std(dists, axis=1)*1e2)
