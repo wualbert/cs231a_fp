@@ -81,3 +81,16 @@ def draw_registration_result_open3d(source, target, transformation,
                                       # front=[0.9288, -0.2951, -0.2242],
                                       # lookat=[1.6784, 2.0612, 1.4451],
                                       # up=[-0.3402, -0.9189, -0.1996])
+
+def draw_point_clouds(clouds, colors=None):
+    if colors is None:
+        colors = [None]*len(clouds)
+    elif len(colors)<len(clouds):
+        colors.extend([None]*(len(clouds)-len(colors)))
+    vis_clouds = []
+    for ci, cloud in enumerate(clouds):
+        cloud_copy = copy.copy(cloud)
+        if colors[ci] is not None:
+            cloud_copy.paint_uniform_color(colors[ci])
+        vis_clouds.append(cloud_copy)
+    open3d.visualization.draw_geometries(vis_clouds)

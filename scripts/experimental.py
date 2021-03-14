@@ -27,22 +27,23 @@ trans = np.eye(4)
 trans[:3,:] = RT
 reg_p2p = open3d.registration.registration_icp(
     model_cloud, pcd, threshold, trans)
-def execute_global_registration(source_down, target_down, source_fpfh,
-                                target_fpfh, voxel_size):
-    distance_threshold = voxel_size * 1.5
-    print(":: RANSAC registration on downsampled point clouds.")
-    print("   Since the downsampling voxel size is %.3f," % voxel_size)
-    print("   we use a liberal distance threshold %.3f." % distance_threshold)
-    result = open3d.pipelines.registration.registration_ransac_based_on_feature_matching(
-        source_down, target_down, source_fpfh, target_fpfh, distance_threshold,
-        open3d.pipelines.registration.TransformationEstimationPointToPoint(False),
-        4, [
-            open3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(
-                0.9),
-            open3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
-                distance_threshold)
-        ], open3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 500))
-    return result
+
+# def execute_global_registration(source_down, target_down, source_fpfh,
+#                                 target_fpfh, voxel_size):
+#     distance_threshold = voxel_size * 1.5
+#     print(":: RANSAC registration on downsampled point clouds.")
+#     print("   Since the downsampling voxel size is %.3f," % voxel_size)
+#     print("   we use a liberal distance threshold %.3f." % distance_threshold)
+#     result = open3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+#         source_down, target_down, source_fpfh, target_fpfh, distance_threshold,
+#         open3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+#         4, [
+#             open3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(
+#                 0.9),
+#             open3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+#                 distance_threshold)
+#         ], open3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 500))
+#     return result
 
 print(reg_p2p.transformation)
 
