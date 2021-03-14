@@ -3,7 +3,8 @@ import meshcat
 import meshcat.geometry as g
 import meshcat.transformations as tf
 import numpy as np
-
+import copy
+import open3d
 
 def make_meshcat_color_array(N, r, g, b):
     '''
@@ -58,3 +59,25 @@ def visualize_point_cloud(meshcat_vis, clouds:np.ndarray):
         cloud_meshcat = g.PointCloud(cloud[:,:3].T, color_arr, size=0.01)
 
         meshcat_vis[str(i)].set_object(cloud_meshcat)
+
+
+def draw_registration_result_open3d(source, target, transformation,
+                                    other_clouds,
+                                    colors = None):
+    source_temp = copy.deepcopy(source)
+    target_temp = copy.deepcopy(target)
+    other_clouds = copy.deepcopy(other_clouds)
+    if colors is None:
+        colors = np.zeros((2+len(other_clouds), 3))
+        colors[0,:] = [1,0,0]
+        colors[1,:] = [0,0,1]
+    source_temp.paint_uniform_color(colors[0,:])
+    target_temp.paint_uniform_color(colors[1,:])
+    source_temp.transform(transformation)
+    clouds = [source_temp, target_temp]
+    clouds.extend(other_clouds)
+    open3d.visualization.draw_geometries(clouds)#,
+                                      # zoom=0.4459,
+                                      # front=[0.9288, -0.2951, -0.2242],
+                                      # lookat=[1.6784, 2.0612, 1.4451],
+                                      # up=[-0.3402, -0.9189, -0.1996])
