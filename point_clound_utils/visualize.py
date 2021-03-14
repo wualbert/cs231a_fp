@@ -30,7 +30,7 @@ def make_meshcat_color_array(N, r, g, b):
 
 rgb_sequences = [(0.5, 0., 0.), (0., 0., 0.5), (1., 1., 0.)]
 
-def visualize_point_cloud(meshcat_vis, clouds:np.ndarray):
+def visualize_point_cloud_meshcat(meshcat_vis, clouds:np.ndarray):
     '''
     Visualize the ground truth (red), observation (blue), and transformed
     (yellow) point clouds in meshcat.
@@ -62,7 +62,7 @@ def visualize_point_cloud(meshcat_vis, clouds:np.ndarray):
 
 
 def draw_registration_result_open3d(source, target, transformation,
-                                    other_clouds,
+                                    other_clouds=[],
                                     colors = None):
     source_temp = copy.deepcopy(source)
     target_temp = copy.deepcopy(target)

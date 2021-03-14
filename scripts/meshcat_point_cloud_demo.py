@@ -24,11 +24,11 @@ for model_i in param.selected_models:
 
     # H_hat2, d2, i = icp.repeat_icp_until_convergence(point_cloud, transformed_cloud)
     print('i', i, np.average(d))
-    visualize.visualize_point_cloud(vis,
-                                    [noisy_cloud,
+    visualize.visualize_point_cloud_meshcat(vis,
+                                            [noisy_cloud,
                                      transform.transform_cloud(point_cloud,
                                                                H_hat),
                                      transformed_cloud]
-                                    # transform.transform_cloud(point_cloud,
-                                    #                           H_hat2)]
-                                    )
+                                            # transform.transform_cloud(point_cloud,
+                                            #                           H_hat2)]
+                                            )
