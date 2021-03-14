@@ -21,7 +21,7 @@ def draw_tracks(frame_num, frame, mask, points_prev, points_curr, color):
     return img
 
 
-def compute_tracked_features_and_tranformation(frames, depths,
+def compute_tracked_features_and_tranformation(images, depths,
                                                intrinsic):
     """Code for question 5a.
 
@@ -30,7 +30,7 @@ def compute_tracked_features_and_tranformation(frames, depths,
       tracked features.  Include the visualization and your answer to the
       questions in the separate PDF.
     """
-    assert len(frames)==2
+    # assert len(images)==2
     # params for ShiTomasi corner detection
     feature_params = dict(
         maxCorners=200,
@@ -46,7 +46,7 @@ def compute_tracked_features_and_tranformation(frames, depths,
         flags=(cv2.OPTFLOW_LK_GET_MIN_EIGENVALS))
 
     # Convert to gray images.
-    old_frame = frames[0]
+    old_frame = images[0]
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
     p0 = cv2.goodFeaturesToTrack(old_gray, mask = None, **feature_params)
 
@@ -54,17 +54,16 @@ def compute_tracked_features_and_tranformation(frames, depths,
     color = np.random.randint(0, 255, (200, 3))
 
     # Create a mask image for drawing purposes
-    mask = np.zeros_like(frames[1])
+    mask = np.zeros_like(images[1])
     track_p = [p0]
     prev_frame = old_gray
     prev_p = p0
-    for i,frame in enumerate(frames[1:]):
+    for i,frame in enumerate(images[1:]):
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # TODO: Fill in this code
         # BEGIN YOUR CODE HERE
         p, st, err = cv2.calcOpticalFlowPyrLK(prev_frame, frame_gray, prev_p,
                                                 None, **lk_params)
-        print(np.average(err))
         track_p.append(p)
         points_curr = p[st==1]
         points_prev = prev_p[st==1]
@@ -74,7 +73,7 @@ def compute_tracked_features_and_tranformation(frames, depths,
         prev_frame = frame_gray
         prev_p = p
         # END YOUR CODE HERE
-    assert(len(track_p) == len(frames))
+    assert(len(track_p) == len(images))
     track_p = np.squeeze(track_p)
     # return np.squeeze(p0), np.squeeze(track_p[0]), np.squeeze(track_p[1])
     # track_p is len(frame)*maxCorners(200)*2
