@@ -32,17 +32,18 @@ def compute_tracked_features_and_tranformation(images, depths,
     """
     # assert len(images)==2
     # params for ShiTomasi corner detection
+    max_corners = 500
     feature_params = dict(
-        maxCorners=200,
-        qualityLevel=0.01,
+        maxCorners=max_corners,
+        qualityLevel=0.05,
         minDistance=7,
         blockSize=7)
 
     # Parameters for lucas kanade optical flow
     lk_params = dict(
-        winSize=(60,60),
+        winSize=(75,75),
         maxLevel=1,
-        criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 100, 0.01),
+        criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 300, 0.01),
         flags=(cv2.OPTFLOW_LK_GET_MIN_EIGENVALS))
 
     # Convert to gray images.
@@ -51,7 +52,7 @@ def compute_tracked_features_and_tranformation(images, depths,
     p0 = cv2.goodFeaturesToTrack(old_gray, mask = None, **feature_params)
 
     # Create some random colors for drawing
-    color = np.random.randint(0, 255, (200, 3))
+    color = np.random.randint(0, 255, (max_corners, 3))
 
     # Create a mask image for drawing purposes
     mask = np.zeros_like(images[1])
@@ -76,16 +77,18 @@ def compute_tracked_features_and_tranformation(images, depths,
     assert(len(track_p) == len(images))
     track_p = np.squeeze(track_p)
     # return np.squeeze(p0), np.squeeze(track_p[0]), np.squeeze(track_p[1])
-    # track_p is len(frame)*maxCorners(200)*2
+    # track_p is len(frame)*maxCorners(max_corners)*2
     # Convert to homogeneous
     shape = np.array(track_p.shape)
     shape[2] = 1
     track_p_hom = np.append(track_p,np.ones(shape), axis=2)
     # Convert to 3D
     kinv = np.linalg.pinv(intrinsic)
-    track_p_3d = (track_p_hom @ kinv.T)
+    track_p_3d = np.zeros(track_p_hom.shape)
+    for i in range(track_p_hom.shape[0]):
+        track_p_3d[i,:,:] = (kinv@track_p_hom[i,:,:].T).T
     depth_values = []
-    all_in_bound_indices = set(list(range(200)))
+    all_in_bound_indices = set(list(range(max_corners)))
     for track_p_i in range(len(track_p)):
         in_bound_indices = np.where(np.logical_and(
             np.logical_and(track_p[track_p_i,:,1].astype(int)<480,
@@ -112,7 +115,7 @@ def compute_tracked_features_and_tranformation(images, depths,
     # Solve for the transformations between each images
     Rs = []
     centroids = np.average(track_p_3d, axis=1)
-    Ts = centroids[1:,:] - centroids[:-1,:]
+    Ts = []
     track_p_3d_normalized = np.copy(track_p_3d)
     for i in range(track_p_3d_normalized.shape[0]):
         track_p_3d_normalized[i,:,:] -= centroids[i,:]
@@ -124,8 +127,20 @@ def compute_tracked_features_and_tranformation(images, depths,
         M = np.eye(3)
         M[2,2] = np.linalg.det(VT.T@U.T)
         R = VT.T@M@U.T
+        T = centroids[i,:] - R@centroids[i-1,:]
         Rs.append(R)
+        Ts.append(T)
+        # pcd1 = io.get_cloud_from_rgb_and_d(images[i-1], depths[i-1],
+        #                                    intrinsic)
+        # pcd2 = io.get_cloud_from_rgb_and_d(images[i], depths[i],
+        #                                    intrinsic)
+        # transformation = np.eye(4)
+        # transformation[:3, :3] = R
+        # transformation[:3, -1] = T
+        # visualize.draw_registration_result_open3d(pcd1, pcd2, transformation,
+        #                                           [pcd1])
     Rs = np.atleast_3d(np.asarray(Rs))
+    Ts = np.atleast_2d(np.asarray(Ts))
     assert(len(Rs)==len(Ts))
     return Rs, Ts
 
@@ -146,8 +161,8 @@ if __name__ == "__main__":
     transformation[:3,-1] = RTs[1][0]
 
     # Visualize point clouds
-    pcd1 = io.load_cloud_from_selected_image(image_number=image_numbers[0])
-    pcd2 = io.load_cloud_from_selected_image(image_number=image_numbers[1])
+    pcd1 = io.load_cloud_from_selected_image_id(image_number=image_numbers[0])
+    pcd2 = io.load_cloud_from_selected_image_id(image_number=image_numbers[1])
     print('Trans', transformation)
     visualize.draw_registration_result_open3d(pcd1, pcd2, transformation, [pcd1])
 

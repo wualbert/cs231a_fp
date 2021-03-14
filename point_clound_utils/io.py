@@ -57,10 +57,16 @@ def load_clouds_from_selected_models(open3d=True,
     return clouds
 
 
-def load_rgb_and_d(image_number=0, open3d=False):
-    img_file = param.linemod_path+'RGB-D/rgb_noseg/color_'+\
-               str(image_number).zfill(5)+'.png'
-    depth_file = param.linemod_path+'RGB-D/depth_noseg/depth_'+\
+def load_rgb_and_d(image_number=0, open3d=False,
+                   linemod_path=param.linemod_path,
+                   selected_noise=param.selected_noise):
+    if selected_noise !=0:
+        img_file = linemod_path+f'RGB-D/rgb_noseg_{selected_noise}/color_'+\
+                   str(image_number).zfill(5)+'.png'
+    else:
+        img_file = linemod_path+'RGB-D/rgb_noseg/color_'+\
+                   str(image_number).zfill(5)+'.png'
+    depth_file = linemod_path+'RGB-D/depth_noseg/depth_'+\
                str(image_number).zfill(5)+'.png'
     img = o3d.io.read_image(img_file)
     depth = o3d.io.read_image(depth_file)
@@ -69,10 +75,45 @@ def load_rgb_and_d(image_number=0, open3d=False):
     else:
         return np.array(img), np.array(depth)/1000.
 
-def load_cloud_from_selected_image(image_number=0, intrinsics=None):
+def get_cloud_from_rgb_and_d(img, depth, intrinsics=None):
     if intrinsics is None:
         intrinsics = load_camera_intrinsics_open3d()
-    img,depth=load_rgb_and_d(image_number,open3d=True)
+    elif type(intrinsics) is not o3d.camera.PinholeCameraIntrinsic:
+        open3d_intrinsics = o3d.camera.PinholeCameraIntrinsic()
+        open3d_intrinsics.set_intrinsics(width=640,
+                                         height=480,
+                                         fx=intrinsics[0, 0],
+                                         fy=intrinsics[1, 1],
+                                         cx=intrinsics[0, 2],
+                                         cy=intrinsics[1, 2],
+                                         )
+        intrinsics = open3d_intrinsics
+    if type(img) != o3d.geometry.Image:
+        img = o3d.geometry.Image(img.astype(np.uint8))
+    if type(depth) != o3d.geometry.Image:
+        depth = o3d.geometry.Image((depth*255).astype(np.uint8))
+    rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
+        img, depth,
+        depth_scale=1.0)#see camera.json
+    pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsics)
+    return pcd
+
+def load_cloud_from_selected_image_id(image_number=0, intrinsics=None,
+                                      selected_noise=param.selected_noise):
+    if intrinsics is None:
+        intrinsics = load_camera_intrinsics_open3d()
+    elif type(intrinsics) is not o3d.camera.PinholeCameraIntrinsic:
+        open3d_intrinsics = o3d.camera.PinholeCameraIntrinsic()
+        open3d_intrinsics.set_intrinsics(width=640,
+                                         height=480,
+                                         fx=intrinsics[0, 0],
+                                         fy=intrinsics[1, 1],
+                                         cx=intrinsics[0, 2],
+                                         cy=intrinsics[1, 2],
+                                         )
+        intrinsics = open3d_intrinsics
+    img,depth=load_rgb_and_d(image_number,open3d=True,
+                             selected_noise=selected_noise)
     rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
         img, depth,
         depth_scale=1000.0)#see camera.json
@@ -92,10 +133,15 @@ def load_camera_intrinsics_open3d():
                                      )
     return open3d_intrinsics
 
-def load_segpose_prediction(obj_name, image_number, out_i = ''):
+def load_segpose_prediction(obj_name, image_number, out_i = '',
+                            selected_noise=param.selected_noise):
     obj_name = obj_name.lower()
     image_number = str(image_number).zfill(4)
-    file = param.segpose_out_path+out_i+'/'+obj_name+'/'+image_number+'.txt'
+    if selected_noise == 0:
+        segpose_out_path = param.segpose_out_path_no_noise
+    else:
+        segpose_out_path = param.segpose_out_path_no_noise+f'-{selected_noise}'
+    file = segpose_out_path+out_i+'/'+obj_name+'/'+image_number+'.txt'
     RT = np.loadtxt(file)
     return RT
 

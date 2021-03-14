@@ -13,7 +13,7 @@ import meshcat.transformations as tf
 
 import open3d
 
-pcd = io.load_cloud_from_selected_image()
+pcd = io.load_cloud_from_selected_image_id()
 model_cloud = io.load_clouds_from_selected_models()['Driller']
 
 

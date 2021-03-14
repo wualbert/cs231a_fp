@@ -69,8 +69,8 @@ def draw_registration_result_open3d(source, target, transformation,
     other_clouds = copy.deepcopy(other_clouds)
     if colors is None:
         colors = np.zeros((2+len(other_clouds), 3))
-        colors[0,:] = [1,0,0]
-        colors[1,:] = [0,0,1]
+        colors[0,:] = [1,0,0] # R
+        colors[1,:] = [0,0,1] # G
     source_temp.paint_uniform_color(colors[0,:])
     target_temp.paint_uniform_color(colors[1,:])
     source_temp.transform(transformation)
@@ -82,7 +82,7 @@ def draw_registration_result_open3d(source, target, transformation,
                                       # lookat=[1.6784, 2.0612, 1.4451],
                                       # up=[-0.3402, -0.9189, -0.1996])
 
-def draw_point_clouds(clouds, colors=None):
+def draw_point_clouds(clouds, colors=None, flip=True):
     if colors is None:
         colors = [None]*len(clouds)
     elif len(colors)<len(clouds):
@@ -92,5 +92,8 @@ def draw_point_clouds(clouds, colors=None):
         cloud_copy = copy.copy(cloud)
         if colors[ci] is not None:
             cloud_copy.paint_uniform_color(colors[ci])
+        if flip:
+            cloud_copy.transform(
+                [[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
         vis_clouds.append(cloud_copy)
     open3d.visualization.draw_geometries(vis_clouds)
