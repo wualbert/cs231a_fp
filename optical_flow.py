@@ -30,6 +30,7 @@ def compute_tracked_features_and_tranformation(frames, depths,
       tracked features.  Include the visualization and your answer to the
       questions in the separate PDF.
     """
+    assert len(frames)==2
     # params for ShiTomasi corner detection
     feature_params = dict(
         maxCorners=200,
@@ -39,7 +40,7 @@ def compute_tracked_features_and_tranformation(frames, depths,
 
     # Parameters for lucas kanade optical flow
     lk_params = dict(
-        winSize=(75, 75),
+        winSize=(60,60),
         maxLevel=1,
         criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 100, 0.01),
         flags=(cv2.OPTFLOW_LK_GET_MIN_EIGENVALS))
@@ -63,6 +64,7 @@ def compute_tracked_features_and_tranformation(frames, depths,
         # BEGIN YOUR CODE HERE
         p, st, err = cv2.calcOpticalFlowPyrLK(prev_frame, frame_gray, prev_p,
                                                 None, **lk_params)
+        print(np.average(err))
         track_p.append(p)
         points_curr = p[st==1]
         points_prev = prev_p[st==1]
@@ -84,14 +86,25 @@ def compute_tracked_features_and_tranformation(frames, depths,
     kinv = np.linalg.pinv(intrinsic)
     track_p_3d = (track_p_hom @ kinv.T)
     depth_values = []
+    all_in_bound_indices = set(list(range(200)))
     for track_p_i in range(len(track_p)):
-        depth_values.append(depths[track_p_i][track_p[track_p_i,:,1].astype(int),
-                                              track_p[track_p_i,:,0].astype(int)])
-    depth_values = np.asarray(depth_values)
-    valid_indices = np.where(np.all(np.logical_not(np.isclose(depth_values, 0)), axis=0))[0]
+        in_bound_indices = np.where(np.logical_and(
+            np.logical_and(track_p[track_p_i,:,1].astype(int)<480,
+                           track_p[track_p_i,:,1].astype(int)>=0),
+            np.logical_and(track_p[track_p_i, :, 0].astype(int) <640,
+                           track_p[track_p_i, :, 0].astype(int) >= 0)))[0]
+        all_in_bound_indices.intersection_update(set(in_bound_indices))
+        depth_values.append(depths[track_p_i][np.minimum(track_p[track_p_i,:,1].astype(int),479,
+                                                         dtype=int),
+                                              np.minimum(track_p[track_p_i,:,0].astype(int),639,
+                                                         dtype=int)])
+    all_in_bound_indices = sorted(list(all_in_bound_indices))
+    track_p_3d = track_p_3d[:,all_in_bound_indices,:]
+    depth_values = np.asarray(depth_values)[:,all_in_bound_indices]
+    in_bound_indices = np.where(np.all(np.logical_not(np.isclose(depth_values, 0)), axis=0))[0]
     # Discard invalid indices
-    depth_values = depth_values[:,valid_indices]
-    track_p_3d = track_p_3d[:,valid_indices,:]
+    depth_values = depth_values[:,in_bound_indices]
+    track_p_3d = track_p_3d[:,in_bound_indices,:]
     scales = np.divide(track_p_3d[:,:,2], depth_values)
     for i in range(3):
         track_p_3d[:,:,i] = np.divide(track_p_3d[:,:,i], scales)
@@ -121,7 +134,7 @@ def compute_tracked_features_and_tranformation(frames, depths,
 if __name__ == "__main__":
     images = []
     depths = []
-    image_numbers = [0,1]
+    image_numbers = [8,9]
     for i in image_numbers:
         image, depth = io.load_rgb_and_d(i)
         images.append(image)
@@ -136,5 +149,6 @@ if __name__ == "__main__":
     # Visualize point clouds
     pcd1 = io.load_cloud_from_selected_image(image_number=image_numbers[0])
     pcd2 = io.load_cloud_from_selected_image(image_number=image_numbers[1])
+    print('Trans', transformation)
     visualize.draw_registration_result_open3d(pcd1, pcd2, transformation, [pcd1])
 
