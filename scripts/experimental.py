@@ -13,19 +13,19 @@ import meshcat.transformations as tf
 
 import open3d
 
-pcd = io.load_cloud_from_selected_image_id()
-model_cloud = io.load_clouds_from_selected_models()['Driller']
+pcd = io.load_cloud_from_selected_image_id(image_number=12)
+model_cloud = io.load_clouds_from_selected_models()['can']
 
 
 threshold = 0.3
-RT = io.load_segpose_prediction('Driller', 0)
-RT_gt = io.load_ground_truth_pose('Driller', 0)
+RT = io.load_segpose_prediction('driller', 0)
+RT_gt = io.load_ground_truth_pose('driller', 0)
 # trans_init = np.asarray([[0.862, 0.011, -0.507, 0.5],
 #                          [-0.139, 0.967, -0.215, 0.7],
 #                          [0.487, 0.255, 0.835, -1.4], [0.0, 0.0, 0.0, 1.0]])
 trans = np.eye(4)
 trans[:3,:] = RT
-reg_p2p = open3d.registration.registration_icp(
+reg_p2p = open3d.pipelines.registration.registration_icp(
     model_cloud, pcd, threshold, trans)
 
 # def execute_global_registration(source_down, target_down, source_fpfh,
@@ -45,9 +45,10 @@ reg_p2p = open3d.registration.registration_icp(
 #         ], open3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 500))
 #     return result
 
-print(reg_p2p.transformation)
-
-visualize.draw_registration_result_open3d(model_cloud, pcd, reg_p2p.transformation)
+# visualize.draw_registration_result_open3d(model_cloud, pcd, reg_p2p.transformation)
+#
+#
+# visualize.draw_registration_result_open3d(model_cloud, pcd, reg_p2p.transformation)
 # open3d.draw_geometries([pcd])
 
 # vis = meshcat.Visualizer()

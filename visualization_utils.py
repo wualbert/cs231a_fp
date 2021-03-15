@@ -16,7 +16,7 @@ def plot_error(x, y, yerr,
     if fig is None or ax is None:
         fig, ax = plt.subplots()
     if label is not None:
-        ax.errorbar(x, y, yerr, fmt=f'o{color}', lw=3, label=label)
+        ax.errorbar(x, y, yerr, fmt=f'o{color}', lw=1, label=label)
     else:
-        ax.errorbar(x, y, yerr, fmt=f'o{color}', lw=3)
+        ax.errorbar(x, y, yerr, fmt=f'o{color}', lw=1)
     return fig, ax

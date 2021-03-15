@@ -70,7 +70,7 @@ def draw_registration_result_open3d(source, target, transformation,
     if colors is None:
         colors = np.zeros((2+len(other_clouds), 3))
         colors[0,:] = [1,0,0] # R
-        colors[1,:] = [0,0,1] # G
+        colors[1,:] = [0,0,1] # B
     source_temp.paint_uniform_color(colors[0,:])
     target_temp.paint_uniform_color(colors[1,:])
     source_temp.transform(transformation)

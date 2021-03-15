@@ -9,7 +9,8 @@ from filterpy.kalman import ExtendedKalmanFilter
 from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 import matplotlib.pyplot as plt
-
+import os
+import time
 # def eval_segpose_predictions(image_ids=None,
 #                              object_names=None):
 #     if image_ids is None:
@@ -165,7 +166,6 @@ import matplotlib.pyplot as plt
 #                                          [1,1,0]]) #R: GT, G: Seg, B: Est, Y:Kalman
 #     return d_seg_average, d_seg_sd, d_est_average, d_est_sd
 
-
 def eval_segpose_icp_kalman_predictions(image_ids=None,
                              object_names=None,
                                         selected_noise=param.selected_noise):
@@ -248,7 +248,6 @@ def eval_segpose_icp_kalman_predictions(image_ids=None,
             RT_kalman[:3,:3] = R.from_euler('xyz',state_post[3:]).as_matrix()
             RT_kalman[:3,-1] = state_post[:3]
 
-            print(ekf.R)
             state_prior = np.ndarray.flatten(ekf.x_prior)
             RT_kalman_prior = np.eye(4)
             RT_kalman_prior[:3,:3] = R.from_euler('xyz',state_prior[3:]).as_matrix()
@@ -273,35 +272,37 @@ def eval_segpose_icp_kalman_predictions(image_ids=None,
             model_cloud_kalman_prior = copy.copy(model_clouds[object_name])
             model_cloud_kalman_prior.transform(RT_kalman_prior)
 
+            print(img_i)
             for cloud_i, cloud in enumerate([model_cloud_seg,
                                              model_cloud_est,
                                              model_cloud_kalman,
-                                             model_cloud_kalman_icp,
-                                             model_cloud_kalman_prior]):
+                                             model_cloud_kalman_icp]):
                 d_current = np.asarray(model_cloud_gt.compute_point_cloud_distance(cloud))
                 ds_avg[obj_i, img_i, cloud_i] = np.average(d_current)
                 ds_std[obj_i, img_i, cloud_i] = np.std(d_current)
             # visualize.draw_point_clouds([model_cloud_gt, model_cloud_seg,
             #                              model_cloud_est, model_cloud_kalman,
             #                              model_cloud_kalman_icp,
-            #                              model_cloud_kalman_prior,
             #                              scene_cloud],
             #                             [[1,0,0],[0,1,0],[0,0,1],
-            #                              [1,1,0],[1,0,1],
-            #                              [0,1,1]]) #R: GT, G: Seg, B: Seg+ICP, Y:Kalman, P: Kalman+ICP, C: Kalman Prior
+            #                              [1,1,0],[1,0,1]]) #R: GT, G: Seg, B: Seg+ICP, Y:Kalman, P: Kalman+ICP
     return ds_avg, ds_std
 
 
 if __name__ == "__main__":
     # results = eval_segpose_predictions(None, ['can'])
     # results = eval_segpose_icp_predictions(None, ['can'])
-    objects = ['glue']
-    noises = 0.1
+    timenow = str(time.time())
+    objects = ['can']
+    noises = 0.05
     ds, _ = eval_segpose_icp_kalman_predictions(None, objects,
                                                 selected_noise=noises)
+    drop_count = 3
+    ds = ds[:,drop_count:,:]
     labels = ['Segpose', 'Segpose+ICP', 'Segpose+Kalman',
               'Segpose+Kalman+ICP']
     colors = ['r','g','b','y']
+    os.mkdir(timenow)
     for obj_id, object in enumerate(objects):
         fig, ax = plt.subplots()
         for i in range(len(labels)):
@@ -311,7 +312,7 @@ if __name__ == "__main__":
         ax.set_title(f'Pose Estimation Error with Noise Amount {noises}')
         ax.set_xlabel('Image number')
         ax.set_ylabel('Error')
-        plt.show()
+        plt.savefig(f'{timenow}/'+object + '.png', dpi=300)
     fig, ax = plt.subplots()
     ds = ds[0, :, :-1]
     ds_avg = np.average(ds,axis=0)
@@ -322,8 +323,8 @@ if __name__ == "__main__":
     # vizu.plot_error_with_min_max(range(len(ds_avg)), ds_avg, ds_std, ds_min,
     #                              ds_max,fig=fig, ax=ax,
     #                         label=labels)
-    vizu.plot_error(range(len(ds_avg)), ds_avg, ds_std,fig=fig, ax=ax)
-    plt.show()
+    vizu.plot_error(range(len(ds_avg)), ds_avg, ds_std,fig=fig, ax=ax,label=labels)
+    plt.savefig(f'{timenow}/error_bar.png', dpi=300)
     # for obj_id, object in enumerate(objects):
     #     fig, axs = plt.subplots()
     #     for i in range(len(labels)):

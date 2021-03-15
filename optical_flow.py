@@ -132,15 +132,15 @@ def compute_tracked_features_and_tranformation(images, depths,
         T = centroids[i,:] - R@centroids[i-1,:]
         Rs.append(R)
         Ts.append(T)
-        # pcd1 = io.get_cloud_from_rgb_and_d(images[i-1], depths[i-1],
-        #                                    intrinsic)
-        # pcd2 = io.get_cloud_from_rgb_and_d(images[i], depths[i],
-        #                                    intrinsic)
-        # transformation = np.eye(4)
-        # transformation[:3, :3] = R
-        # transformation[:3, -1] = T
-        # visualize.draw_registration_result_open3d(pcd1, pcd2, transformation,
-        #                                           [pcd1])
+        pcd1 = io.get_cloud_from_rgb_and_d(images[i-1], depths[i-1],
+                                           intrinsic)
+        pcd2 = io.get_cloud_from_rgb_and_d(images[i], depths[i],
+                                           intrinsic)
+        transformation = np.eye(4)
+        transformation[:3, :3] = R
+        transformation[:3, -1] = T
+        visualize.draw_registration_result_open3d(pcd1, pcd2, transformation,
+                                                  [pcd1])
     Rs = np.atleast_3d(np.asarray(Rs))
     Ts = np.atleast_2d(np.asarray(Ts))
     assert(len(Rs)==len(Ts))

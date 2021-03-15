@@ -10,5 +10,7 @@ selected_linemod_objects = {'Driller':6, 'Holepuncher':10, 'Can':4,
 
 # selected_linemod_image_ids = list(range(97,108))
 # selected_linemod_image_ids = list(range(128, 135))
-selected_linemod_image_ids = list(range(5, 15))
-# selected_linemod_image_ids = list(range(264, 276))
+# selected_linemod_image_ids = list(range(5, 15))
+# selected_linemod_image_ids = list(reversed(list(range(1025, 1036))))
+# selected_linemod_image_ids = list(range(1019, 1036))
+selected_linemod_image_ids = list(range(264, 276))
