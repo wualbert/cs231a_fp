@@ -187,9 +187,10 @@ def eval_segpose_icp_kalman_predictions(image_ids=None,
 
     # First compute the image to image transformations
     intrinsic = io.load_camera_intrinsics_open3d().intrinsic_matrix
-    image_RTs = optical_flow.compute_tracked_features_and_tranformation(
+    ans = optical_flow.compute_tracked_features_and_tranformation(
         images, depths, intrinsic)
-
+    image_RTs = ans[:2]
+    err = ans[2]
     def hx(x,image_RT):
         x_shape = x.shape
         x = np.ndarray.flatten(x)
@@ -247,6 +248,7 @@ def eval_segpose_icp_kalman_predictions(image_ids=None,
             RT_kalman[:3,:3] = R.from_euler('xyz',state_post[3:]).as_matrix()
             RT_kalman[:3,-1] = state_post[:3]
 
+            print(ekf.R)
             state_prior = np.ndarray.flatten(ekf.x_prior)
             RT_kalman_prior = np.eye(4)
             RT_kalman_prior[:3,:3] = R.from_euler('xyz',state_prior[3:]).as_matrix()
@@ -310,7 +312,18 @@ if __name__ == "__main__":
         ax.set_xlabel('Image number')
         ax.set_ylabel('Error')
         plt.show()
-    print(np.average(ds, axis=1), np.std(ds, axis=1))
+    fig, ax = plt.subplots()
+    ds = ds[0, :, :-1]
+    ds_avg = np.average(ds,axis=0)
+    ds_std = np.std(ds,axis=0)
+    print(ds_avg, ds_std)
+    ds_min = np.min(ds,axis=0)
+    ds_max = np.max(ds,axis=0)
+    # vizu.plot_error_with_min_max(range(len(ds_avg)), ds_avg, ds_std, ds_min,
+    #                              ds_max,fig=fig, ax=ax,
+    #                         label=labels)
+    vizu.plot_error(range(len(ds_avg)), ds_avg, ds_std,fig=fig, ax=ax)
+    plt.show()
     # for obj_id, object in enumerate(objects):
     #     fig, axs = plt.subplots()
     #     for i in range(len(labels)):

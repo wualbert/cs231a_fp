@@ -59,6 +59,7 @@ def compute_tracked_features_and_tranformation(images, depths,
     track_p = [p0]
     prev_frame = old_gray
     prev_p = p0
+    errs = []
     for i,frame in enumerate(images[1:]):
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # TODO: Fill in this code
@@ -74,6 +75,7 @@ def compute_tracked_features_and_tranformation(images, depths,
         prev_frame = frame_gray
         prev_p = p
         # END YOUR CODE HERE
+        errs.append(np.median(err))
     assert(len(track_p) == len(images))
     track_p = np.squeeze(track_p)
     # return np.squeeze(p0), np.squeeze(track_p[0]), np.squeeze(track_p[1])
@@ -142,7 +144,8 @@ def compute_tracked_features_and_tranformation(images, depths,
     Rs = np.atleast_3d(np.asarray(Rs))
     Ts = np.atleast_2d(np.asarray(Ts))
     assert(len(Rs)==len(Ts))
-    return Rs, Ts
+    print(errs)
+    return Rs, Ts, errs
 
 
 if __name__ == "__main__":
